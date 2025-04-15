@@ -153,9 +153,9 @@ def parent_selection(population):
 
     #Gets the total population fitness
     populationFitness = 0
-    for element in population:
-        if element['fitness'] > 0:
-            populationFitness += element['fitness']
+    for individual in population:
+        if individual['fitness'] > 0:
+            populationFitness += individual['fitness']
 
     # If, by any chance, every element has negative fitness it will return a random element of the population
     if populationFitness <= 0:
@@ -165,16 +165,16 @@ def parent_selection(population):
     #Selects a random probability
     randomProbability = random.random()
 
-    for element in population:
+    for individual in population:
         #If an element has positive fitness it will get it's % over the whole 
         # positive Fitness population and subtract from the randomprobability
-        if element['fitness'] > 0:
-            fitnessProbability = element['fitness'] / populationFitness
+        if individual['fitness'] > 0:
+            fitnessProbability = individual['fitness'] / populationFitness
             randomProbability -= fitnessProbability
 
         # If the random Probability now is 0 or less it means the element was selected
         if randomProbability <= 0:
-            return copy.deepcopy(element)
+            return copy.deepcopy(individual)
             
         
     return copy.deepcopy(random.choice(population))
