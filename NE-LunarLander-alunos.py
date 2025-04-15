@@ -183,12 +183,46 @@ def parent_selection(population):
 def crossover(p1, p2):
     #TODO
     #Create an offspring from the individuals p1 and p2
-    return p1
+
+    # Garante que pelo menos 1 elemento de cada pai é selecionado
+    crossover_point = random.randint(1,GENOTYPE_SIZE-1)
+
+    # Cria  o genotipo do offspring
+    offspring_genotype = []
+
+    #Define se p1 ou p2 tem o seu genotipo em primeiro lugar
+    parent_order_selection = random.random()
+
+    #Cria o novo genotiopo baseado no crossover_point aleatoriamente definido
+    if parent_order_selection <= 0.5:
+        offspring_genotype.extend(p1['genotype'][:crossover_point])
+        offspring_genotype.extend(p2['genotype'][crossover_point:])
+
+    else:
+        offspring_genotype.extend(p2['genotype'][:crossover_point])
+        offspring_genotype.extend(p1['genotype'][crossover_point:])
+
+
+    #Cria o novo individuo baseado no genotype do offspring
+    offspring = {'genotype': offspring_genotype, 'fitness': None}
+
+    return offspring
 
 def mutation(p):
     #TODO
     #Mutate the individual p
-    return p    
+
+    mutated_individual = copy.deepcopy(p)
+    individual_genotype = p['genotype']
+
+    for i in range(len(individual_genotype)):
+        mutation_probability = random.random()
+
+        if mutation_probability < PROB_MUTATION:
+            mutation_value = np.random.normal(0,STD_DEV)
+            individual_genotype[i] += mutation_value
+
+    return mutated_individual
     
 def survival_selection(population, offspring):
     #reevaluation of the elite
