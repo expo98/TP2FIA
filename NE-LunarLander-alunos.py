@@ -10,7 +10,7 @@ ENABLE_WIND = False
 WIND_POWER = 15.0
 TURBULENCE_POWER = 0.0
 GRAVITY = -10.0
-RENDER_MODE = 'human'
+RENDER_MODE = None
 EPISODES = 1000
 STEPS = 500
 
@@ -74,9 +74,50 @@ def objective_function(observation):
     #TODO: Implement your own objective function
     #Computes the quality of the individual based 
     #on the horizontal distance to the landing pad, the vertical velocity and the angle
+    
+    fitness = 0
+    
     x = observation[0]
     y = observation[1]
-    return -abs(x) - abs(y), check_successful_landing(observation)
+
+    x_speed = observation[2]
+    y_speed = observation[3]
+
+    angle = observation[4]
+    angle_speed = observation[5]
+
+    left_leg_touching = observation[6]
+    right_leg_touching = observation[7]
+    
+    # Em primeiro lugar definimos as penalizações
+    
+
+
+    #Aqui penalizamos a distancia 
+    #distancia_zona =  np.sqrt( np.pow(x*10,2) + np.pow(y*10,2))
+    #fitness -= pow(distancia_zona,2)
+
+    # Aqui definimos as rewards
+
+    if abs(x) <= 0.2 and left_leg_touching == 1 and right_leg_touching == 1:
+        fitness += 300
+
+    fitness += 200 - pow(abs(y_speed*20),2)
+    fitness += 200 - pow(abs(angle*100),2)
+
+    
+
+    #if abs(y_speed) <= 0.2 and abs(y_speed) > 0.05:
+        #fitness += 200
+    
+    #if abs(angle_speed) <= 0.2:
+        #fitness += 100
+    
+    #if abs(angle) <= np.deg2rad(20):
+        #fitness += 100
+
+
+    return fitness, check_successful_landing(observation)
 
 def simulate(genotype, render_mode = None, seed=None, env = None):
     #Simulates an episode of Lunar Lander, evaluating an individual
@@ -107,7 +148,7 @@ def evaluate(evaluationQueue, evaluatedQueue):
     #Evaluates individuals until it receives None
     #This function runs on multiple processes
     
-    env = gym.make("LunarLander-v3", render_mode =None, 
+    env = gym.make("LunarLander-v3", render_mode = None, 
         continuous=True, gravity=GRAVITY, 
         enable_wind=ENABLE_WIND, wind_power=WIND_POWER, 
         turbulence_power=TURBULENCE_POWER)    
@@ -315,7 +356,7 @@ if __name__ == '__main__':
         ind = b[2]
             
         ind = {'genotype': ind, 'fitness': None}
-            
+        
             
         ntests = 1000
 
