@@ -32,7 +32,7 @@ PROB_CROSSOVER = 0.7
 
   
 PROB_MUTATION = 1.0/GENOTYPE_SIZE
-STD_DEV = 0.1
+STD_DEV = 0.1   
 
 
 ELITE_SIZE = 1
@@ -270,14 +270,13 @@ def mutation(p):
     #Mutate the individual p
 
     mutated_individual = copy.deepcopy(p)
-    individual_genotype = p['genotype']
 
-    for i in range(len(individual_genotype)):
+    for i in range(len(mutated_individual['genotype'])):
         mutation_probability = random.random()
 
         if mutation_probability < PROB_MUTATION:
-            mutation_value = np.random.normal(0,STD_DEV)
-            individual_genotype[i] += mutation_value
+            mutation_value = random.gauss(0,STD_DEV)
+            mutated_individual['genotype'][i] += mutation_value
 
     return mutated_individual
     
