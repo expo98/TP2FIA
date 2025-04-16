@@ -11,8 +11,8 @@ WIND_POWER = 15.0
 TURBULENCE_POWER = 0.0
 GRAVITY = -10.0
 RENDER_MODE = None
-EPISODES = 1000
-STEPS = 500
+EPISODES = 100
+STEPS = 1500
 
 NUM_PROCESSES = os.cpu_count()
 evaluationQueue = Queue()
@@ -26,8 +26,8 @@ GENOTYPE_SIZE = 0
 for i in range(1, len(SHAPE)):
     GENOTYPE_SIZE += SHAPE[i-1]*SHAPE[i]
 
-POPULATION_SIZE = 50
-NUMBER_OF_GENERATIONS = 10
+POPULATION_SIZE = 100
+NUMBER_OF_GENERATIONS = 100
 PROB_CROSSOVER = 0.7
 
   
@@ -103,10 +103,26 @@ def objective_function(observation):
         fitness += 300
 
     fitness += 200 - pow(abs(y_speed*20),2)
+    fitness += 200 - pow(abs(x_speed*20),2)
     fitness += 200 - pow(abs(angle*100),2)
+    fitness += 100 - pow(abs(angle_speed*10),2)
+
+    if x > 0.2 and x_speed > 0:
+        fitness -= 100
+    
+    if x < -0.2 and x_speed < 0:
+        fitness -= 100
+
+
+    if abs(y_speed) < 0.1:
+        fitness -= 200
 
     
+    if abs(x) >= 0.5:
+        fitness -= 200
+    
 
+    
     #if abs(y_speed) <= 0.2 and abs(y_speed) > 0.05:
         #fitness += 200
     
@@ -227,7 +243,7 @@ def crossover(p1, p2):
 
     # Garante que pelo menos 1 elemento de cada pai é selecionado
     crossover_point = random.randint(1,GENOTYPE_SIZE-1)
-
+    
     # Cria  o genotipo do offspring
     offspring_genotype = []
 
@@ -336,7 +352,7 @@ def load_bests(fname):
 
 if __name__ == '__main__':
     
-    evolve = True
+    evolve = False
     render_mode = 'human'
     if evolve:
         seeds = [964, 952, 364, 913, 140, 726, 112, 631, 881, 844, 965, 672, 335, 611, 457, 591, 551, 538, 673, 437, 513, 893, 709, 489, 788, 709, 751, 467, 596, 976]
@@ -350,7 +366,7 @@ if __name__ == '__main__':
                 
     else:
         #validate individual
-        bests = load_bests('log0.txt')
+        bests = load_bests('log29.txt')
         b = bests[-1]
         SHAPE = b[1]
         ind = b[2]
