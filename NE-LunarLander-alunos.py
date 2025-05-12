@@ -12,7 +12,7 @@ TURBULENCE_POWER = 0.0
 GRAVITY = -10.0
 RENDER_MODE = None
 EPISODES = 100
-STEPS = 1500
+STEPS = 500
 
 NUM_PROCESSES = os.cpu_count()
 evaluationQueue = Queue()
@@ -28,12 +28,14 @@ for i in range(1, len(SHAPE)):
 
 POPULATION_SIZE = 100
 NUMBER_OF_GENERATIONS = 100
-PROB_CROSSOVER = 0.7
+PROB_CROSSOVER = 0.5
 
   
 PROB_MUTATION = 1.0/GENOTYPE_SIZE
+PROB_MUTATION = 0.05
 STD_DEV = 0.1   
 
+EVALS = 3
 
 ELITE_SIZE = 1
 
@@ -90,47 +92,42 @@ def objective_function(observation):
     right_leg_touching = observation[7]
     
     # Em primeiro lugar definimos as penalizações
-    
+
+    #stable_angle = pow(abs(angle), 2) if abs(angle) < 0.2 else 0
+    stable_angle = (32400-angle**2) / 32400
+    stable_angle_speed = int(abs(angle_speed) < 0.3)
+
+    stable_vertical_speed = int(abs(y_speed) < 0.3)
 
 
-    #Aqui penalizamos a distancia 
-    #distancia_zona =  np.sqrt( np.pow(x*10,2) + np.pow(y*10,2))
-    #fitness -= pow(distancia_zona,2)
 
-    # Aqui definimos as rewards
+    stability = (
+        10* stable_angle +
+        10* stable_angle_speed +
+        10* stable_vertical_speed
+    )
 
-    if abs(x) <= 0.2 and left_leg_touching == 1 and right_leg_touching == 1:
-        fitness += 300
+    positioning_x_centered = (1-x**2) / 1
+    positioning_y_centered = (1-y**2) / 1
 
-    fitness += 200 - pow(abs(y_speed*20),2)
-    fitness += 200 - pow(abs(x_speed*20),2)
-    fitness += 200 - pow(abs(angle*100),2)
-    fitness += 100 - pow(abs(angle_speed*10),2)
-
-    if x > 0.2 and x_speed > 0:
-        fitness -= 100
-    
-    if x < -0.2 and x_speed < 0:
-        fitness -= 100
+    positioning = (
+        100* positioning_x_centered +
+        positioning_y_centered
+    )
 
 
-    if abs(y_speed) < 0.1:
-        fitness -= 200
+    landing = (
+        10*int(left_leg_touching) +
+        10*int(right_leg_touching) +
+        10*int(left_leg_touching and right_leg_touching)
+    )
 
-    
-    if abs(x) >= 0.5:
-        fitness -= 200
-    
 
-    
-    #if abs(y_speed) <= 0.2 and abs(y_speed) > 0.05:
-        #fitness += 200
-    
-    #if abs(angle_speed) <= 0.2:
-        #fitness += 100
-    
-    #if abs(angle) <= np.deg2rad(20):
-        #fitness += 100
+    fitness = (
+        stability + 
+        positioning +
+        landing
+    )
 
 
     return fitness, check_successful_landing(observation)
@@ -174,7 +171,18 @@ def evaluate(evaluationQueue, evaluatedQueue):
         if ind is None:
             break
             
-        ind['fitness'] = simulate(ind['genotype'], seed = None, env = env)[0]
+        fit_sum = 0
+        success_sum = 0
+        for i in range(EVALS):
+            #Simulate the individual
+            fit, success = simulate(ind['genotype'], seed = None, env = env)
+            fit_sum += fit
+            success_sum += int(success)
+
+        ind['fitness'] = fit_sum / EVALS
+        ind['success'] = success_sum / EVALS
+
+        #ind['fitness'] = simulate(ind['genotype'], seed = None, env = env)[0]
                 
         evaluatedQueue.put(ind)
     env.close()
@@ -207,7 +215,6 @@ def parent_selection(population):
     #TODO
     #Select an individual from the population
     
-
     #Gets the total population fitness
     populationFitness = 0
     for individual in population:
@@ -235,7 +242,22 @@ def parent_selection(population):
             
         
     return copy.deepcopy(random.choice(population))
-    
+
+
+def parent_selection_tournament(population):
+    #TODO
+    #Select an individual from the population using tournament selection
+    #Selects 2 random individuals and returns the one with the best fitness
+    p1 = random.choice(population)
+    p2 = random.choice(population)
+
+    if p1['fitness'] > p2['fitness']:
+        return copy.deepcopy(p1)
+    else:
+        return copy.deepcopy(p2)
+
+PARENT_SELECTION = parent_selection_tournament
+
 
 def crossover(p1, p2):
     #TODO
@@ -310,12 +332,12 @@ def evolution():
         #create offspring
         while len(offspring) < POPULATION_SIZE:
             if random.random() < PROB_CROSSOVER:
-                p1 = parent_selection(population)
-                p2 = parent_selection(population)
+                p1 = PARENT_SELECTION(population)
+                p2 = PARENT_SELECTION(population)
                 ni = crossover(p1, p2)
 
             else:
-                ni = parent_selection(population)
+                ni = PARENT_SELECTION(population)
                 
             ni = mutation(ni)
             offspring.append(ni)
@@ -352,7 +374,9 @@ def load_bests(fname):
 if __name__ == '__main__':
     
     evolve = False
-    render_mode = 'human'
+    #evolve = True
+    render_mode = None
+    #render_mode =   'human'
     if evolve:
         seeds = [964, 952, 364, 913, 140, 726, 112, 631, 881, 844, 965, 672, 335, 611, 457, 591, 551, 538, 673, 437, 513, 893, 709, 489, 788, 709, 751, 467, 596, 976]
         for i in range(30):    
@@ -365,7 +389,7 @@ if __name__ == '__main__':
                 
     else:
         #validate individual
-        bests = load_bests('log29.txt')
+        bests = load_bests('log0.txt')
         b = bests[-1]
         SHAPE = b[1]
         ind = b[2]
