@@ -1,9 +1,10 @@
 import random
 import copy
 import numpy as np
-import gymnasium as gym 
+import gymnasium as gym
 import os
 from multiprocessing import Process, Queue
+import time
 
 # CONFIG
 ENABLE_WIND = False
@@ -30,10 +31,10 @@ POPULATION_SIZE = 100
 NUMBER_OF_GENERATIONS = 100
 PROB_CROSSOVER = 0.5
 
-  
+
 PROB_MUTATION = 1.0/GENOTYPE_SIZE
 PROB_MUTATION = 0.05
-STD_DEV = 0.1   
+STD_DEV = 0.1
 
 EVALS = 3
 
@@ -67,18 +68,14 @@ def check_successful_landing(observation):
     stable_velocity = vy > -0.2
     stable_orientation = abs(theta) < np.deg2rad(20)
     stable = stable_velocity and stable_orientation
- 
+
     if legs_touching and on_landing_pad and stable:
         return True
     return False
 
 def objective_function(observation):
-    #TODO: Implement your own objective function
-    #Computes the quality of the individual based 
-    #on the horizontal distance to the landing pad, the vertical velocity and the angle
-    
     fitness = 0
-    
+
     x = observation[0]
     y = observation[1]
 
@@ -90,29 +87,29 @@ def objective_function(observation):
 
     left_leg_touching = observation[6]
     right_leg_touching = observation[7]
-    
-    # Em primeiro lugar definimos as penalizações
+
 
     #stable_angle = pow(abs(angle), 2) if abs(angle) < 0.2 else 0
-    stable_angle = (32400-angle**2) / 32400
-    stable_angle_speed = int(abs(angle_speed) < 0.3)
+    stable_angle = (25-(angle)**2) / 25
+    stable_angle_speed = int(abs(angle_speed) < 1.5)
 
-    stable_vertical_speed = int(abs(y_speed) < 0.3)
+    #stable_horizontal_speed = (10-(x_speed)**2) / 10
+    stable_horizontal_speed = int(abs(x_speed) < 0.1)   # Neste caso é melhor discreto
+    stable_vertical_speed = (10-(y_speed+0.2)**2) / 10  # Offset de -0.2 (velocidade desejada de -0.2)
 
 
 
     stability = (
-        10* stable_angle +
-        10* stable_angle_speed +
-        10* stable_vertical_speed
+        500* stable_angle +
+        400* stable_angle_speed +
+        200* stable_horizontal_speed +
+        300* stable_vertical_speed
     )
 
     positioning_x_centered = (1-x**2) / 1
-    positioning_y_centered = (1-y**2) / 1
 
     positioning = (
-        100* positioning_x_centered +
-        positioning_y_centered
+        300* positioning_x_centered
     )
 
 
@@ -124,9 +121,9 @@ def objective_function(observation):
 
 
     fitness = (
-        stability + 
-        positioning +
-        landing
+        stability
+        #positioning +
+        #landing
     )
 
 
@@ -136,23 +133,23 @@ def simulate(genotype, render_mode = None, seed=None, env = None):
     #Simulates an episode of Lunar Lander, evaluating an individual
     env_was_none = env is None
     if env is None:
-        env = gym.make("LunarLander-v3", render_mode =render_mode, 
-        continuous=True, gravity=GRAVITY, 
-        enable_wind=ENABLE_WIND, wind_power=WIND_POWER, 
-        turbulence_power=TURBULENCE_POWER)    
-        
+        env = gym.make("LunarLander-v3", render_mode =render_mode,
+        continuous=True, gravity=GRAVITY,
+        enable_wind=ENABLE_WIND, wind_power=WIND_POWER,
+        turbulence_power=TURBULENCE_POWER)
+
     observation, info = env.reset(seed=seed)
 
     for _ in range(STEPS):
         prev_observation = observation
         #Chooses an action based on the individual's genotype
         action = network(SHAPE, observation, genotype)
-        observation, reward, terminated, truncated, info = env.step(action)        
+        observation, reward, terminated, truncated, info = env.step(action)
 
         if terminated == True or truncated == True:
             break
-    
-    if env_was_none:    
+
+    if env_was_none:
         env.close()
 
     return objective_function(prev_observation)
@@ -160,17 +157,17 @@ def simulate(genotype, render_mode = None, seed=None, env = None):
 def evaluate(evaluationQueue, evaluatedQueue):
     #Evaluates individuals until it receives None
     #This function runs on multiple processes
-    
-    env = gym.make("LunarLander-v3", render_mode = None, 
-        continuous=True, gravity=GRAVITY, 
-        enable_wind=ENABLE_WIND, wind_power=WIND_POWER, 
-        turbulence_power=TURBULENCE_POWER)    
+
+    env = gym.make("LunarLander-v3", render_mode = None,
+        continuous=True, gravity=GRAVITY,
+        enable_wind=ENABLE_WIND, wind_power=WIND_POWER,
+        turbulence_power=TURBULENCE_POWER)
     while True:
         ind = evaluationQueue.get()
 
         if ind is None:
             break
-            
+
         fit_sum = 0
         success_sum = 0
         for i in range(EVALS):
@@ -183,10 +180,10 @@ def evaluate(evaluationQueue, evaluatedQueue):
         ind['success'] = success_sum / EVALS
 
         #ind['fitness'] = simulate(ind['genotype'], seed = None, env = env)[0]
-                
+
         evaluatedQueue.put(ind)
     env.close()
-    
+
 def evaluate_population(population):
     #Evaluates a list of individuals using multiple processes
     for i in range(len(population)):
@@ -204,7 +201,7 @@ def generate_initial_population():
         #Each individual is a dictionary with a genotype and a fitness value
         #At this time, the fitness value is None
         #The genotype is a list of floats sampled from a uniform distribution between -1 and 1
-        
+
         genotype = []
         for j in range(GENOTYPE_SIZE):
             genotype += [random.uniform(-1,1)]
@@ -214,7 +211,7 @@ def generate_initial_population():
 def parent_selection(population):
     #TODO
     #Select an individual from the population
-    
+
     #Gets the total population fitness
     populationFitness = 0
     for individual in population:
@@ -224,13 +221,13 @@ def parent_selection(population):
     # If, by any chance, every element has negative fitness it will return a random element of the population
     if populationFitness <= 0:
         return copy.deepcopy(random.choice(population))
-        
+
 
     #Selects a random probability
     randomProbability = random.random()
 
     for individual in population:
-        #If an element has positive fitness it will get it's % over the whole 
+        #If an element has positive fitness it will get it's % over the whole
         # positive Fitness population and subtract from the randomprobability
         if individual['fitness'] > 0:
             fitnessProbability = individual['fitness'] / populationFitness
@@ -239,8 +236,8 @@ def parent_selection(population):
         # If the random Probability now is 0 or less it means the element was selected
         if randomProbability <= 0:
             return copy.deepcopy(individual)
-            
-        
+
+
     return copy.deepcopy(random.choice(population))
 
 
@@ -265,7 +262,7 @@ def crossover(p1, p2):
 
     # Garante que pelo menos 1 elemento de cada pai é selecionado
     crossover_point = random.randint(1,GENOTYPE_SIZE-1)
-    
+
     # Cria  o genotipo do offspring
     offspring_genotype = []
 
@@ -301,22 +298,22 @@ def mutation(p):
             mutated_individual['genotype'][i] += mutation_value
 
     return mutated_individual
-    
+
 def survival_selection(population, offspring):
     #reevaluation of the elite
     offspring.sort(key = lambda x: x['fitness'], reverse=True)
     p = evaluate_population(population[:ELITE_SIZE])
     new_population = p + offspring[ELITE_SIZE:]
     new_population.sort(key = lambda x: x['fitness'], reverse=True)
-    return new_population    
-        
+    return new_population
+
 def evolution():
     #Create evaluation processes
     evaluation_processes = []
     for i in range(NUM_PROCESSES):
         evaluation_processes.append(Process(target=evaluate, args=(evaluationQueue, evaluatedQueue)))
         evaluation_processes[-1].start()
-    
+
     #Create initial population
     bests = []
     population = list(generate_initial_population())
@@ -324,11 +321,11 @@ def evolution():
     population.sort(key = lambda x: x['fitness'], reverse=True)
     best = (population[0]['genotype']), population[0]['fitness']
     bests.append(best)
-    
+
     #Iterate over generations
     for gen in range(NUMBER_OF_GENERATIONS):
         offspring = []
-        
+
         #create offspring
         while len(offspring) < POPULATION_SIZE:
             if random.random() < PROB_CROSSOVER:
@@ -338,27 +335,32 @@ def evolution():
 
             else:
                 ni = PARENT_SELECTION(population)
-                
+
             ni = mutation(ni)
             offspring.append(ni)
-            
+
+        start_time = time.time()
+
         #Evaluate offspring
         offspring = evaluate_population(offspring)
 
         #Apply survival selection
         population = survival_selection(population, offspring)
-        
+
+        end_time = time.time()
+
         #Print and save the best of the current generation
         best = (population[0]['genotype']), population[0]['fitness']
         bests.append(best)
-        print(f'Best of generation {gen}: {best[1]}')
+        success_rate = sum(ind['success'] for ind in offspring) / len(offspring)
+        print(f'Best of generation {gen} in {end_time - start_time:.2f}s and {success_rate:.2f}%: {best[1]}')
 
     #Stop evaluation processes
     for i in range(NUM_PROCESSES):
         evaluationQueue.put(None)
     for p in evaluation_processes:
         p.join()
-        
+
     #Return the list of bests
     return bests
 
@@ -372,31 +374,31 @@ def load_bests(fname):
     return bests
 
 if __name__ == '__main__':
-    
+
     evolve = False
     #evolve = True
     render_mode = None
-    #render_mode =   'human'
+    #render_mode = 'human'
     if evolve:
         seeds = [964, 952, 364, 913, 140, 726, 112, 631, 881, 844, 965, 672, 335, 611, 457, 591, 551, 538, 673, 437, 513, 893, 709, 489, 788, 709, 751, 467, 596, 976]
-        for i in range(30):    
+        for i in range(30):
             random.seed(seeds[i])
             bests = evolution()
             with open(f'log{i}.txt', 'w') as f:
                 for b in bests:
                     f.write(f'{b[1]}\t{SHAPE}\t{b[0]}\n')
 
-                
+
     else:
         #validate individual
         bests = load_bests('log0.txt')
         b = bests[-1]
         SHAPE = b[1]
         ind = b[2]
-            
+
         ind = {'genotype': ind, 'fitness': None}
-        
-            
+
+
         ntests = 1000
 
         fit, success = 0, 0
