@@ -633,12 +633,14 @@ Performance comparison of tested configurations:
 8 & 0.05 & 0.9 & & & \\ 
 \hline
 \end{tabular}
+
 \caption{Configuration of the experiments for different parameters.}
 \end{table}
 
 % Table 4: Results
 \begin{table}[h]
 \centering
+
 \begin{tabular}{|l|c|c|}
 \hline
 \textbf{Experiência} & \textbf{Hitrate} & \textbf{Score Médio} \\ \hline
@@ -708,17 +710,14 @@ Even this trivial implementation allows us to achieve a success rate of 86\%, wh
 
 
 \section{Conclusions}
-The evolutionary algorithm proved effective, though wind introduction required:
-\begin{itemize}
-    \item Increased neural network capacity
-    \item Objective function adjustments
-    \item Maintained genetic diversity
-\end{itemize}
+
+
+We conclude that our approach on a neural network to land a lander on the moon was great although further improvements could be made to account for the presence of wind.
+
 
 \subsection{Objective Function Design}
 
 The sucess of the lander heavily depends on the objective functioon. Its careful tuning while balancing weights for stability, positioning, and landing were crucial.
-
 Using continuous reward functions (e.g., quadratic penalties for angle and position) proved to be more effective than discrete thresholds in guiding the lander towards optimal behavior.
 
 \subsection{Parent Selection}
@@ -727,7 +726,5 @@ Tournament selection outperformed fitness-proportionate selection in consistency
 
 \subsection{Wind Adaptation}
 When introducing wind to the environment it required penalizing horizontal oscillations more agressively, showing the need for environment-specific reward shaping.
-
-Larger neural networks - 8, 16, X? - improved adaptability, suggesting that wind introduces complexity requiring higher model capacity.
 
 \end{document}
