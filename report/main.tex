@@ -348,6 +348,193 @@ def objective_function(observation):
 This second version could achieve a maximum of 80\% success rate, but was also plagued by unreliability in the training process, and often resulted in agents that could not surpass 14\% success rate.
 
 
+In the final stage of development, we tweaked the weights multiplied by each rule, in order to balance the importance of each rule.
+To resolve the unreliability of the evolution, we decided then to tweak the mutation constants to make the agents try to explore more, and to not get stuck in local minima.
+By increassing "STD\_DEV" from 0.1 to 0.5, we allow the agents to explore more agressively, which finally allows them to reliably reach a success rate of 99\% in only 100 generations.
+We also increased the "EVALS" from 1 to 5, which makes the simulation take longer, but allows us to more accurately evaluate the fitness of each agent.
+The final OF looks like this:
+\begin{lstlisting}
+    # ...
+    STD_DEV = 0.5
+
+    EVALS = 5
+    # ...
+
+    def objective_function(observation):
+        fitness = 0
+
+        x = observation[0]
+        y = observation[1]
+
+        x_speed = observation[2]
+        y_speed = observation[3]
+
+        angle = observation[4]
+        angle_speed = observation[5]
+
+        left_leg_touching = observation[6]
+        right_leg_touching = observation[7]
+
+
+        stable_angle = (25-(angle)**2) / 25
+        stable_angle_speed = int(abs(angle_speed) < 1.5)
+        stable_horizontal_speed = int(abs(x_speed) < 0.1)   # Neste caso e melhor discreto
+        stable_vertical_speed = (10-(y_speed+0.01)**2) / 10  # Offset de -0.01 (velocidade desejada de -0.01)
+
+        stability = (
+            50* stable_angle +
+            40* stable_angle_speed +
+            40* stable_horizontal_speed +
+            30* stable_vertical_speed
+        )
+
+        positioning_x_centered = (1-x**2) / 1
+        positioning = (
+            40* positioning_x_centered
+        )
+
+        landing = (
+            50 * (int(left_leg_touching and right_leg_touching) * ((1-(x)**2)/1))
+        )
+
+
+        fitness = (
+              stability
+            + positioning
+            + landing
+        )
+
+        return fitness, check_successful_landing(observation)
+
+    # ...
+\end{lstlisting}
+
+Finally, this version reliably achieves a success rate of over 90\%, often reaching 99\%, demonstrating the necessity of increassing the mutation constants to allow the agents to explore more. Even with these simple rules, the lander is able to learn to land in a stable position.
+Looking at the graph of the evolution of the fitness we see the lander quickly learns to land, in only 100 generations, reaching the maximum fitness of 300.0 in 72 generations.
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=0.95\textwidth,
+            height=0.5\textwidth,
+            xlabel={Generation},
+            ylabel={Fitness},
+            grid=both,
+            ymin=150, ymax=310,
+            xmin=1, xmax=100,
+            legend style={at={(0.5,-0.15)},anchor=north},
+        ]
+        \addplot[
+            color=blue,
+            mark=*,
+            mark size=1.2pt,
+        ] coordinates {
+            (1,202.40)
+            (2,175.08)
+            (3,168.36)
+            (4,180.94)
+            (5,180.15)
+            (6,174.38)
+            (7,190.35)
+            (8,181.16)
+            (9,183.18)
+            (10,186.88)
+            (11,193.64)
+            (12,191.56)
+            (13,201.87)
+            (14,211.64)
+            (15,205.19)
+            (16,225.09)
+            (17,195.15)
+            (18,194.95)
+            (19,204.69)
+            (20,202.85)
+            (21,211.01)
+            (22,213.79)
+            (23,206.78)
+            (24,220.19)
+            (25,215.26)
+            (26,206.48)
+            (27,198.31)
+            (28,197.33)
+            (29,215.75)
+            (30,208.05)
+            (31,208.35)
+            (32,223.78)
+            (33,224.75)
+            (34,238.98)
+            (35,214.31)
+            (36,218.61)
+            (37,230.65)
+            (38,232.24)
+            (39,230.49)
+            (40,247.15)
+            (41,241.72)
+            (42,234.06)
+            (43,247.02)
+            (44,251.16)
+            (45,249.98)
+            (46,269.94)
+            (47,258.70)
+            (48,229.75)
+            (49,236.51)
+            (50,247.91)
+            (51,258.83)
+            (52,240.99)
+            (53,247.21)
+            (54,257.13)
+            (55,257.21)
+            (56,270.49)
+            (57,231.62)
+            (58,256.31)
+            (59,263.22)
+            (60,268.27)
+            (61,279.61)
+            (62,254.06)
+            (63,285.19)
+            (64,299.12)
+            (65,278.23)
+            (66,276.94)
+            (67,277.17)
+            (68,279.61)
+            (69,288.74)
+            (70,280.66)
+            (71,289.50)
+            (72,299.72)
+            (73,299.82)
+            (74,299.93)
+            (75,299.95)
+            (76,299.94)
+            (77,299.95)
+            (78,299.97)
+            (79,299.97)
+            (80,299.99)
+            (81,299.96)
+            (82,299.97)
+            (83,299.97)
+            (84,299.95)
+            (85,299.99)
+            (86,299.94)
+            (87,299.97)
+            (88,299.98)
+            (89,299.97)
+            (90,299.98)
+            (91,299.98)
+            (92,299.99)
+            (93,299.98)
+            (94,299.99)
+            (95,300.00)
+            (96,299.99)
+            (97,299.99)
+            (98,299.99)
+            (99,299.99)
+            (100,299.99)
+        };
+        \addlegendentry{Best Fitness per Generation}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Evolution of fitness over generations.}
+\end{figure}
 
 
 \subsection{Genetic Operators}
