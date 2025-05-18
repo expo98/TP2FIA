@@ -606,10 +606,27 @@ Adaptations for wind conditions (15W):
 
 \section{Conclusions}
 The evolutionary algorithm proved effective, though wind introduction required:
+
 \begin{itemize}
+
     \item Increased neural network capacity
     \item Objective function adjustments
     \item Maintained genetic diversity
+    
 \end{itemize}
+
+
+\subsection{Objective Function Design}
+
+The sucess of the lander heavily depends on the objective functioon. Its careful tuning while balancing weights for stability, positioning, and landing were crucial.
+Using continuous reward functions (e.g., quadratic penalties for angle and position) proved to be more effective than discrete thresholds in guiding the lander towards optimal behavior.
+
+\subsection{Parent Selection}
+Tournament selection outperformed fitness-proportionate selection in consistency. Retaining both methods allowed for flexibility, but tournament selection was more reliable for this problem.
+
+\subsection{Wind Adaptation}
+When introducing wind to the environment it required penalizing horizontal oscillations more agressively, showing the need for environment-specific reward shaping.
+
+Larger neural networks - 8, 16, X? - improved adaptability, suggesting that wind introduces complexity requiring higher model capacity.
 
 \end{document}
