@@ -27,16 +27,16 @@ GENOTYPE_SIZE = 0
 for i in range(1, len(SHAPE)):
     GENOTYPE_SIZE += SHAPE[i-1]*SHAPE[i]
 
-POPULATION_SIZE = 100
+POPULATION_SIZE = 200
 NUMBER_OF_GENERATIONS = 100
 PROB_CROSSOVER = 0.5
 
 
 PROB_MUTATION = 1.0/GENOTYPE_SIZE
 PROB_MUTATION = 0.05
-STD_DEV = 0.1
+STD_DEV = 0.5
 
-EVALS = 3
+EVALS = 5
 
 ELITE_SIZE = 1
 
@@ -384,10 +384,10 @@ if __name__ == '__main__':
     evolve = False
     #evolve = True
     render_mode = None
-    render_mode = 'human'
+    #render_mode = 'human'
     if evolve:
         seeds = [964, 952, 364, 913, 140, 726, 112, 631, 881, 844, 965, 672, 335, 611, 457, 591, 551, 538, 673, 437, 513, 893, 709, 489, 788, 709, 751, 467, 596, 976]
-        for i in range(30):
+        for i in range(1):
             random.seed(seeds[i])
             bests = evolution()
             with open(f'log{i}.txt', 'w') as f:
@@ -412,5 +412,5 @@ if __name__ == '__main__':
             f, s = simulate(ind['genotype'], render_mode=render_mode, seed = None)
             fit += f
             success += s
-            print(f, s)
+            print(i, ": ", f, s)
         print(fit/ntests, success/ntests)
