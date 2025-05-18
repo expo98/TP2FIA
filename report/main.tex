@@ -10,6 +10,7 @@
 
 % Useful packages
 \usepackage{amsmath}
+\usepackage[utf8]{inputenc}
 \usepackage{titling}
 \newcommand{\subtitle}[1]{%
   \posttitle{%
@@ -22,6 +23,32 @@
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage{tocloft} % For customizing the TOC
 \usepackage{booktabs}
+
+% to display the code
+\usepackage{listings}
+\usepackage{xcolor}
+\lstdefinestyle{python}{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{gray}\itshape,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    frame=single,
+    breaklines=true,
+    tabsize=4,
+    backgroundcolor=\color{gray!10},
+}
+\lstset{style=python}
+
+% to display the graphs
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 
 
 \title{\textbf{Lunar Lander}}
@@ -84,13 +111,158 @@ lM & lateral Motor \\
 \end{table}
 
 \subsection{Objective Function}
-Customized reward function that emphasizes:
-\begin{itemize}
-    \item Platform proximity (\(1 - x^2\))
-    \item Stable vertical velocity (\(10 - (v_y + 0.01)^2\))
-    \item Vertical orientation (\(25 - \theta^2\))
-    \item Simultaneous leg contact
-\end{itemize}
+The most important mechanism of our evolution is the Objective Function. It is also the part that has undergone the biggest change throughout development.
+Our Objective Function is designed to evaluate the lander and guide it to a successful landing by rewarding stability, position, and landing.
+
+We started with the simple goal of stabilizing the lander. The first version of the OF looks like this:
+\begin{lstlisting}
+def objective_function(observation):
+    fitness = 0
+
+    x = observation[0]
+    y = observation[1]
+    x_speed = observation[2]
+    y_speed = observation[3]
+    angle = observation[4]
+    angle_speed = observation[5]
+    left_leg_touching = observation[6]
+    right_leg_touching = observation[7]
+
+    #stability
+    stable_angle = (25-(angle)**2) / 25
+    stable_angle_speed = int(abs(angle_speed) < 1.5)
+
+    stable_horizontal_speed = int(abs(x_speed) < 0.1)   # Neste caso é melhor discreto
+    stable_vertical_speed = (10-(y_speed+0.2)**2) / 10  # Offset de -0.2 (velocidade desejada de -0.2)
+
+    stability = (
+        500* stable_angle +
+        400* stable_angle_speed +
+        200* stable_horizontal_speed +
+        300* stable_vertical_speed
+    )
+
+
+
+    fitness = (
+        stability
+    )
+
+    return fitness, check_successful_landing(observation)
+\end{lstlisting}
+
+Some noteworthy aspects of this code are our early decision to make each rule return values normalized between 0 and 1 that are then multiplied by a weight to balance the importance of different rules, and the utilization of constant functions instead of discrete, to better guide the lander to the desirable state smoothly.
+
+\begin{figure}[h]
+    \centering
+    % Top-left: stable_angle
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                domain=-5:5,
+                samples=100,
+                axis lines=middle,
+                xlabel={A},
+                ylabel={stable\_angle},
+                width=0.95\textwidth,
+                height=0.6\textwidth,
+                ymin=-1.2, ymax=1.2,
+                xmin=-5, xmax=5,
+                grid=both,
+                legend style={at={(0.5,-0.15)},anchor=north},
+            ]
+            \addplot[blue, thick] {(25 - (x)^2)/25};
+            \addlegendentry{$(25-\mathrm{angle}^2)/25$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{stable\_angle}
+    \end{minipage}
+    \hfill
+    % Top-right: stable_angle_speed
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                domain=-3:3,
+                samples=100,
+                axis lines=middle,
+                xlabel={Va},
+                ylabel={stable\_angle\_speed},
+                width=0.95\textwidth,
+                height=0.6\textwidth,
+                ymin=-0.2, ymax=1.2,
+                xmin=-3, xmax=3,
+                grid=both,
+                legend style={at={(0.5,-0.15)},anchor=north},
+            ]
+            \addplot[red, thick, samples=2, domain=-3:-1.5] {0};
+            \addplot[red, thick, samples=2, domain=-1.5:1.5] {1};
+            \addplot[red, thick, samples=2, domain=1.5:3] {0};
+            \addlegendentry{$\mathrm{int}(|\mathrm{angle\_speed}| < 1.5)$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{stable\_angle\_speed}
+    \end{minipage}
+    \vspace{1em}
+
+    % Bottom-left: stable_horizontal_speed
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                domain=-0.5:0.5,
+                samples=2,
+                axis lines=middle,
+                xlabel={Vx},
+                ylabel={stable\_horizontal\_speed},
+                width=0.95\textwidth,
+                height=0.6\textwidth,
+                ymin=-0.2, ymax=1.2,
+                xmin=-0.5, xmax=0.5,
+                grid=both,
+                legend style={at={(0.5,-0.15)},anchor=north},
+            ]
+            \addplot[green, thick, samples=2, domain=-0.5:-0.1] {0};
+            \addplot[green, thick, samples=2, domain=-0.1:0.1] {1};
+            \addplot[green, thick, samples=2, domain=0.1:0.5] {0};
+            \addlegendentry{$\mathrm{int}(|\mathrm{x\_speed}| < 0.1)$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{stable\_horizontal\_speed}
+    \end{minipage}
+    \hfill
+    % Bottom-right: stable_vertical_speed
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                domain=-3:3,
+                samples=100,
+                axis lines=middle,
+                xlabel={Vy},
+                ylabel={stable\_vertical\_speed},
+                width=0.95\textwidth,
+                height=0.6\textwidth,
+                ymin=-1.2, ymax=1.2,
+                xmin=-3, xmax=3,
+                grid=both,
+                legend style={at={(0.5,-0.15)},anchor=north},
+                ]
+                \addplot[green, thick] {(10 - (x + 0.02)^2)/10};
+                \addlegendentry{$(10 - (v_y + 0.02)^2)/10$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{stable\_vertical\_speed}
+        \label{fig:stable_vertical_speed}
+    \end{minipage}
+\end{figure}
+
+As shown in Figure~\ref{fig:stable_vertical_speed}, in the stable\_vertical\_speed function, we added a small offset of $-0.2$ to encourage the lander to descend at a speed of $-0.2$, which is the desired speed for landing. This adjustment helps prevent the lander from stopping completely or ascending.
+This allows us to not have to add a separate rule to encourage the lander to descend, as it is already being done by the stable\_vertical\_speed function.
+
+
+
 
 \subsection{Genetic Operators}
 
