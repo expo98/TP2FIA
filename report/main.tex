@@ -167,7 +167,7 @@ Some noteworthy aspects of this code are our early decision to make each rule re
                 ylabel={stable\_angle},
                 width=0.95\textwidth,
                 height=0.6\textwidth,
-                ymin=-1.2, ymax=1.2,
+                ymin=-0.2, ymax=1.2,
                 xmin=-5, xmax=5,
                 grid=both,
                 legend style={at={(0.5,-0.15)},anchor=north},
@@ -244,7 +244,7 @@ Some noteworthy aspects of this code are our early decision to make each rule re
                 ylabel={stable\_vertical\_speed},
                 width=0.95\textwidth,
                 height=0.6\textwidth,
-                ymin=-1.2, ymax=1.2,
+                ymin=-0.2, ymax=1.2,
                 xmin=-3, xmax=3,
                 grid=both,
                 legend style={at={(0.5,-0.15)},anchor=north},
@@ -260,6 +260,92 @@ Some noteworthy aspects of this code are our early decision to make each rule re
 
 As shown in Figure~\ref{fig:stable_vertical_speed}, in the stable\_vertical\_speed function, we added a small offset of $-0.2$ to encourage the lander to descend at a speed of $-0.2$, which is the desired speed for landing. This adjustment helps prevent the lander from stopping completely or ascending.
 This allows us to not have to add a separate rule to encourage the lander to descend, as it is already being done by the stable\_vertical\_speed function.
+
+This version of the code generated a peak landing success rate of 24\%, but the evolution process is still very unreliable, and in some tests it remains 1\%. This is a problem that will only be resolved in the final version of the code.
+
+
+Having the stability taken care of, we entered the phase of development. We added a metric to guide the positioning and landing. The code added looks like this:
+\begin{lstlisting}
+def objective_function(observation):
+    fitness = 0
+
+    # ------ existing observations ------- #
+
+    # ---- existing stability rewards ---- #
+
+    positioning_x_centered = (1-(x)**2) / 1
+    positioning = (
+        40* positioning_x_centered
+    )
+
+
+    # maximises fitness when both legs are touching, and x==0, using a quadratic function to center the lander
+    landing = (
+        50 * (int(left_leg_touching and right_leg_touching) * ((1-(x)**2)/1))
+    )
+
+
+
+    fitness = (
+          stability
+        + positioning
+        + landing
+    )
+
+    return fitness, check_successful_landing(observation)
+\end{lstlisting}
+
+\begin{figure}[h]
+    \centering
+    % Left: positioning_x_centered
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                domain=-1.5:1.5,
+                samples=100,
+                axis lines=middle,
+                xlabel={x},
+                ylabel={positioning\_x\_centered},
+                width=0.95\textwidth,
+                height=0.6\textwidth,
+                ymin=-1.2, ymax=1.2,
+                xmin=-1.5, xmax=1.5,
+                grid=both,
+                legend style={at={(0.5,-0.15)},anchor=north},
+            ]
+            \addplot[blue, thick] {(1 - (x)^2)/1};
+            \addlegendentry{$(1-x^2)/1$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{positioning\_x\_centered}
+    \end{minipage}
+    \hfill
+    % Right: landing
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                domain=-1.5:1.5,
+                samples=100,
+                axis lines=middle,
+                xlabel={x},
+                ylabel={landing},
+                width=0.95\textwidth,
+                height=0.6\textwidth,
+                ymin=-1.2, ymax=1.2,
+                xmin=-1.5, xmax=1.5,
+                grid=both,
+                legend style={at={(0.5,-0.15)},anchor=north},
+            ]
+            \addplot[red, thick] {(1 - (x)^2)};
+            \addlegendentry{$(1-x^2)$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{landing (when both legs touch)}
+    \end{minipage}
+\end{figure}
+This second version could achieve a maximum of 80\% success rate, but was also plagued by unreliability in the training process, and often resulted in agents that could not surpass 14\% success rate.
 
 
 
