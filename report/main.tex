@@ -597,12 +597,38 @@ Experiment 3 & 82\% & 156 \\
 \end{table}
 
 \subsection{Milestone 2: Windy Environment}
-Adaptations for wind conditions (15W):
-\begin{itemize}
-    \item Enhanced architecture: (8,16,2)
-    \item Horizontal oscillation penalties
-    \item Achieved success: 74\% with fitness 138
-\end{itemize}
+In order to adapt the algorithm to the windy environment, we made the stability rules weight more, something that is easy to do with the way we built the code:
+\begin{lstlisting}
+    def objective_function(observation):
+
+        # ...
+
+        stable_angle = (25-(angle)**2) / 25
+        stable_angle_speed = int(abs(angle_speed) < 1.5)
+        stable_horizontal_speed = int(abs(x_speed) < 0.1)   # Neste caso é melhor discreto
+        stable_vertical_speed = (10-(y_speed+0.01)**2) / 10  # Offset de -0.01 (velocidade desejada de -0.01)
+
+        stability = (
+            50* stable_angle +
+            40* stable_angle_speed +
+            40* stable_horizontal_speed +
+            30* stable_vertical_speed
+        ) * 1 + (int(ENABLE_WIND) * 10)
+
+        # ...
+
+        fitness = (
+              stability
+            + positioning
+            + landing
+        )
+
+        return fitness, check_successful_landing(observation)
+    # ...
+\end{lstlisting}
+The way this weight is implemented, allows us to easily turn it on and off, and to adjust the weight of the wind penalty.
+Even this trivial implementation allows us to achieve a success rate of 86\%, which is significantly better than the 24\% we achieved in the first version of the code.
+
 
 \section{Conclusions}
 The evolutionary algorithm proved effective, though wind introduction required:
