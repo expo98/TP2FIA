@@ -1,0 +1,112 @@
+\documentclass{article}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[a4paper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{titling}
+\newcommand{\subtitle}[1]{%
+  \posttitle{%
+    \par\end{center}
+    \begin{center}\large#1\end{center}
+    \vskip0.5em}%
+}
+\usepackage{graphicx}
+\usepackage[inkscapelatex=false]{svg}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{tocloft} % For customizing the TOC
+\usepackage{booktabs}
+
+
+\title{\textbf{Lunar Lander}}
+\subtitle{Project \#2 for Artificial Intelligence Fundamentals}
+
+\author{Francisco Silva, Miguel Pereira and Guilherme Rodrigues 
+\\ Nº 2022213583, 2022232552 and 2022232102 \\ \\
+Department of Informatics Engineering \\
+University of Coimbra, Coimbra, Portugal
+\\ \textbf{\{francisco.lapamsilva,miguelmpereira0409,gfr04\}}@gmail.com}
+
+\date{May 18th, 2025}
+
+\begin{document}
+
+\maketitle
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Methodology}
+\subsection{Neural Network Architecture}
+The neural network uses the architecture \texttt{SHAPE = (8, 12, 2)} with:
+\begin{itemize}
+    \item 8 inputs (environment observations)
+    \item 1 hidden layer with 12 neurons
+    \item 2 outputs (engine controls)
+\end{itemize}
+
+\subsection{Objective Function}
+Customized reward function emphasizing:
+\begin{itemize}
+    \item Platform proximity (\(1 - x^2\))
+    \item Stable vertical velocity (\(10 - (v_y + 0.01)^2\))
+    \item Vertical orientation (\(25 - \theta^2\))
+    \item Simultaneous leg contact
+\end{itemize}
+
+\subsection{Genetic Operators}
+\begin{itemize}
+    \item \textbf{Selection}: Binary tournament
+    \item \textbf{Crossover}: Random point crossover
+    \item \textbf{Mutation}: Normal distribution (\(\sigma=0.1\))
+\end{itemize}
+
+\subsection{Algorithm Parameters}
+\begin{itemize}
+    \item Population size: 100 individuals
+    \item Generations: 100
+    \item Crossover probability: 50\%
+    \item Elite size: 1 individual
+\end{itemize}
+
+\section{Experimentation and Results}
+\subsection{Milestone 1: Windless Environment}
+Performance comparison of tested configurations:
+
+\begin{table}[h]
+\centering
+\caption{Configuration Performance (Milestone 1)}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Configuration & Average Success Rate & Average Fitness \\ 
+\midrule
+Experiment 1 & 68\% & 142 \\
+Experiment 3 & 82\% & 156 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Milestone 2: Windy Environment}
+Adaptations for wind conditions (15W):
+\begin{itemize}
+    \item Enhanced architecture: (8,16,2)
+    \item Horizontal oscillation penalties
+    \item Achieved success: 74\% with fitness 138
+\end{itemize}
+
+\section{Conclusions}
+The evolutionary algorithm proved effective, though wind introduction required:
+\begin{itemize}
+    \item Increased neural network capacity
+    \item Objective function adjustments
+    \item Maintained genetic diversity
+\end{itemize}
+
+\end{document}
