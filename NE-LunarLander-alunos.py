@@ -15,7 +15,7 @@ RENDER_MODE = None
 EPISODES = 100
 STEPS = 500
 
-NUM_PROCESSES = os.cpu_count()
+NUM_PROCESSES = max(1, os.cpu_count()-1)    # gostava de usar o meu pc plz :)
 evaluationQueue = Queue()
 evaluatedQueue = Queue()
 
@@ -103,7 +103,7 @@ def objective_function(observation):
         40* stable_angle_speed +
         40* stable_horizontal_speed +
         30* stable_vertical_speed
-    )
+    ) * 1 + (int(ENABLE_WIND) * 10)
 
 
 
@@ -411,9 +411,9 @@ if __name__ == '__main__':
         for i in range(1,ntests+1):
             seed = random.randint(0, 100000)
             f, s = simulate(ind['genotype'], render_mode=render_mode, seed = seed)
-            if s == False and render_mode == None:
-                print("REPLAYING")
-                simulate(ind['genotype'], render_mode='human', seed = seed)
+            #if s == False and render_mode == None:
+            #    print("REPLAYING")
+            #    simulate(ind['genotype'], render_mode='human', seed = seed)
             fit += f
             success += s
             print(i, ": ", f, s)
