@@ -89,44 +89,50 @@ def objective_function(observation):
     right_leg_touching = observation[7]
 
 
+
     #stable_angle = pow(abs(angle), 2) if abs(angle) < 0.2 else 0
     stable_angle = (25-(angle)**2) / 25
     stable_angle_speed = int(abs(angle_speed) < 1.5)
 
     #stable_horizontal_speed = (10-(x_speed)**2) / 10
     stable_horizontal_speed = int(abs(x_speed) < 0.1)   # Neste caso é melhor discreto
-    stable_vertical_speed = (10-(y_speed+0.2)**2) / 10  # Offset de -0.2 (velocidade desejada de -0.2)
-
-
+    stable_vertical_speed = (10-(y_speed+0.01)**2) / 10  # Offset de -0.01 (velocidade desejada de -0.01)
 
     stability = (
-        500* stable_angle +
-        400* stable_angle_speed +
-        200* stable_horizontal_speed +
-        300* stable_vertical_speed
+        50* stable_angle +
+        40* stable_angle_speed +
+        40* stable_horizontal_speed +
+        30* stable_vertical_speed
     )
+
+
 
     positioning_x_centered = (1-x**2) / 1
 
     positioning = (
-        300* positioning_x_centered
+        40* positioning_x_centered
     )
 
+
+
+    # maximises fitness when both legs are touching, and x==0, using a quadratic function
+    #landing_in_zone = (100* (1-abs(x)**2) * (left_leg_touching and right_leg_touching))
 
     landing = (
-        10*int(left_leg_touching) +
-        10*int(right_leg_touching) +
-        10*int(left_leg_touching and right_leg_touching)
+        50 * (int(left_leg_touching and right_leg_touching) * ((1-(x)**2)/1))
     )
+
 
 
     fitness = (
-        stability
-        #positioning +
-        #landing
+          stability
+        + positioning
+        + landing
     )
 
-
+    #print(stable_angle, stable_angle_speed, stable_horizontal_speed, stable_vertical_speed)
+    #print(positioning_x_centered)
+    #print(landing_in_zone)
     return fitness, check_successful_landing(observation)
 
 def simulate(genotype, render_mode = None, seed=None, env = None):
@@ -378,7 +384,7 @@ if __name__ == '__main__':
     evolve = False
     #evolve = True
     render_mode = None
-    #render_mode = 'human'
+    render_mode = 'human'
     if evolve:
         seeds = [964, 952, 364, 913, 140, 726, 112, 631, 881, 844, 965, 672, 335, 611, 457, 591, 551, 538, 673, 437, 513, 893, 709, 489, 788, 709, 751, 467, 596, 976]
         for i in range(30):
@@ -406,4 +412,5 @@ if __name__ == '__main__':
             f, s = simulate(ind['genotype'], render_mode=render_mode, seed = None)
             fit += f
             success += s
+            print(f, s)
         print(fit/ntests, success/ntests)
