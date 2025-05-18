@@ -27,7 +27,7 @@ GENOTYPE_SIZE = 0
 for i in range(1, len(SHAPE)):
     GENOTYPE_SIZE += SHAPE[i-1]*SHAPE[i]
 
-POPULATION_SIZE = 200
+POPULATION_SIZE = 100
 NUMBER_OF_GENERATIONS = 100
 PROB_CROSSOVER = 0.5
 
@@ -382,7 +382,7 @@ def load_bests(fname):
 if __name__ == '__main__':
 
     evolve = False
-    #evolve = True
+    evolve = True
     render_mode = None
     #render_mode = 'human'
     if evolve:
