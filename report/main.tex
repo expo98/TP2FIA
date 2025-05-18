@@ -23,6 +23,8 @@
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage{tocloft} % For customizing the TOC
 \usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{utf8}{inputenc}
 
 % to display the code
 \usepackage{listings}
@@ -610,15 +612,46 @@ Performance comparison of tested configurations:
 
 \begin{table}[h]
 \centering
-\caption{Configuration Performance (Milestone 1)}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-Configuration & Average Success Rate & Average Fitness \\ 
-\midrule
-Experiment 1 & 68\% & 142 \\
-Experiment 3 & 82\% & 156 \\
-\bottomrule
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Experiência} & \textbf{Mutação} & \textbf{Crossover} & \textbf{Elitismo} & \textbf{Tamanho da População} & \textbf{Gerações} \\ 
+\hline
+1 & 0.008 & 0.5 & \multirow{4}{*}{0} & \multirow{8}{*}{100} & \multirow{8}{*}{100} \\ 
+\cline{1-3}
+2 & 0.05 & 0.5 & & & \\ 
+\cline{1-3}
+3 & 0.008 & 0.9 & & & \\ 
+\cline{1-3}
+4 & 0.05 & 0.9 & & & \\ 
+\cline{1-4}
+5 & 0.008 & 0.5 & \multirow{4}{*}{1} & & \\ 
+\cline{1-3}
+6 & 0.05 & 0.5 & & & \\ 
+\cline{1-3}
+7 & 0.008 & 0.9 & & & \\ 
+\cline{1-3}
+8 & 0.05 & 0.9 & & & \\ 
+\hline
 \end{tabular}
+\caption{Configuration of the experiments for different parameters.}
+\end{table}
+
+% Table 4: Results
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Experiência} & \textbf{Hitrate} & \textbf{Score Médio} \\ \hline
+1 & 15.4\% & 56653.992 \\ \hline
+2 & 29.5\% & 74103.92 \\ \hline
+3 & 18.3\% & 61151.43 \\ \hline
+4 & 96.9\% & 146582.12 \\ \hline
+5 & 14.3\% & 43808.66 \\ \hline
+6 & 97.2\% & 148110.92 \\ \hline
+7 & 17.0\% & 58213.836 \\ \hline
+8 & 34.8\% & 82988.3 \\ \hline
+\end{tabular}
+\caption{Results of the experiments with different parameters.}
 \end{table}
 
 \subsection{Milestone 2: Windy Environment}
