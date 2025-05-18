@@ -382,7 +382,7 @@ def load_bests(fname):
 if __name__ == '__main__':
 
     evolve = False
-    evolve = True
+    #evolve = True
     render_mode = None
     #render_mode = 'human'
     if evolve:
@@ -409,7 +409,11 @@ if __name__ == '__main__':
 
         fit, success = 0, 0
         for i in range(1,ntests+1):
-            f, s = simulate(ind['genotype'], render_mode=render_mode, seed = None)
+            seed = random.randint(0, 100000)
+            f, s = simulate(ind['genotype'], render_mode=render_mode, seed = seed)
+            if s == False and render_mode == None:
+                print("REPLAYING")
+                simulate(ind['genotype'], render_mode='human', seed = seed)
             fit += f
             success += s
             print(i, ": ", f, s)
