@@ -422,7 +422,7 @@ Looking at the graph of the evolution of the fitness we see the lander quickly l
             xlabel={Generation},
             ylabel={Fitness},
             grid=both,
-            ymin=150, ymax=310,
+            ymin=100, ymax=310,
             xmin=1, xmax=100,
             legend style={at={(0.5,-0.15)},anchor=north},
         ]
@@ -533,6 +533,113 @@ Looking at the graph of the evolution of the fitness we see the lander quickly l
             (100,299.99)
         };
         \addlegendentry{Best Fitness per Generation}
+        \addplot[
+            color=orange,
+            mark=triangle*,
+            mark size=1.2pt,
+        ] coordinates {
+            (1,107.60950469970703)
+            (2,114.01516723632812)
+            (3,119.23980712890625)
+            (4,132.37196350097656)
+            (5,131.091064453125)
+            (6,128.0618438720703)
+            (7,138.94769287109375)
+            (8,144.87901306152344)
+            (9,149.51556396484375)
+            (10,148.81741333007812)
+            (11,143.68441772460938)
+            (12,147.81150817871094)
+            (13,152.5525665283203)
+            (14,156.9348602294922)
+            (15,158.55105590820312)
+            (16,157.64234924316406)
+            (17,156.96963500976562)
+            (18,160.62454223632812)
+            (19,158.57655334472656)
+            (20,164.43505859375)
+            (21,164.46084594726562)
+            (22,162.67828369140625)
+            (23,169.91578674316406)
+            (24,168.1199951171875)
+            (25,171.67755126953125)
+            (26,170.4056396484375)
+            (27,175.5681610107422)
+            (28,177.38128662109375)
+            (29,174.5825653076172)
+            (30,179.5664825439453)
+            (31,178.7470703125)
+            (32,178.0728302001953)
+            (33,184.20628356933594)
+            (34,185.38771057128906)
+            (35,190.07315063476562)
+            (36,192.38076782226562)
+            (37,194.17495727539062)
+            (38,196.38865661621094)
+            (39,195.15826416015625)
+            (40,200.0871124267578)
+            (41,199.98312377929688)
+            (42,199.25650024414062)
+            (43,202.0076904296875)
+            (44,201.0752410888672)
+            (45,198.99832153320312)
+            (46,204.11767578125)
+            (47,204.24911499023438)
+            (48,206.8258819580078)
+            (49,208.0214385986328)
+            (50,212.62628173828125)
+            (51,214.58950805664062)
+            (52,211.5371856689453)
+            (53,212.76376342773438)
+            (54,208.5102996826172)
+            (55,214.91397094726562)
+            (56,215.95159912109375)
+            (57,217.54742431640625)
+            (58,219.02066040039062)
+            (59,216.66635131835938)
+            (60,221.56472778320312)
+            (61,220.64178466796875)
+            (62,224.4318389892578)
+            (63,223.3925018310547)
+            (64,221.82656860351562)
+            (65,217.1066436767578)
+            (66,220.4410400390625)
+            (67,215.1572265625)
+            (68,220.2239227294922)
+            (69,223.57089233398438)
+            (70,223.25502014160156)
+            (71,224.18270874023438)
+            (72,225.88897705078125)
+            (73,227.55636596679688)
+            (74,228.16879272460938)
+            (75,225.2244110107422)
+            (76,221.36752319335938)
+            (77,227.16448974609375)
+            (78,223.21954345703125)
+            (79,224.6089324951172)
+            (80,219.83660888671875)
+            (81,220.83985900878906)
+            (82,220.68373107910156)
+            (83,222.6535186767578)
+            (84,221.7533721923828)
+            (85,221.83261108398438)
+            (86,224.41607666015625)
+            (87,229.30697631835938)
+            (88,228.53936767578125)
+            (89,223.37759399414062)
+            (90,223.57537841796875)
+            (91,222.69703674316406)
+            (92,227.28927612304688)
+            (93,226.1155242919922)
+            (94,223.9437713623047)
+            (95,226.6967315673828)
+            (96,231.26083374023438)
+            (97,227.76144409179688)
+            (98,225.29232788085938)
+            (99,226.84262084960938)
+            (100,227.47052001953125)
+        };
+        \addlegendentry{Mean Fitness per Generation}
         \end{axis}
     \end{tikzpicture}
     \caption{Evolution of fitness over generations.}
@@ -711,20 +818,19 @@ Even this trivial implementation allows us to achieve a success rate of 86\%, wh
 
 \section{Conclusions}
 
-
 We conclude that our approach on a neural network to land a lander on the moon was great although further improvements could be made to account for the presence of wind.
 
 
 \subsection{Objective Function Design}
 
-The sucess of the lander heavily depends on the objective functioon. Its careful tuning while balancing weights for stability, positioning, and landing were crucial.
-Using continuous reward functions (e.g., quadratic penalties for angle and position) proved to be more effective than discrete thresholds in guiding the lander towards optimal behavior.
+The sucess of the lander heavily depends on the objective function. Its careful tuning while balancing weights for stability, positioning, and landing were crucial.
+Using continuous reward functions (e.g., quadratic functions for angle and position) proved to be more effective than discrete thresholds in guiding the lander towards optimal behavior.
 
 \subsection{Parent Selection}
-
-Tournament selection outperformed fitness-proportionate selection in consistency. Retaining both methods allowed for flexibility, but tournament selection was more reliable for this problem.
+Tournament selection outperformed fitness-proportionate selection in consistency. Retaining both methods allowed for flexibility, but tournament selection was enough for this problem.
 
 \subsection{Wind Adaptation}
-When introducing wind to the environment it required penalizing horizontal oscillations more agressively, showing the need for environment-specific reward shaping.
+When introducing wind to the environment it required rewarding more horizontal stability, showing the need for environment-specific reward shaping.
+
 
 \end{document}
