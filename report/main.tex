@@ -568,8 +568,33 @@ Finally, the function returns a new individual represented as a dictionary with 
 This implementation introduces genetic diversity while preserving genetic information from the parents, which is essential for effective exploration of the solution space.
 
 \subsection{Mutation}
+The \texttt{mutation} function is responsible for introducing random genetic variation into an individual. This step is essential in genetic algorithms, as it helps maintain genetic diversity within the population and prevents premature convergence to suboptimal solutions.
+
+The mutation process iterates through each gene in the individual's genotype. For each gene, a random number between 0 and 1 is generated and compared to a predefined mutation probability threshold, given by the constant \texttt{PROB\_MUTATION}. If the generated number is less than the threshold, the gene is mutated.
+
+Mutation is applied by adding a random value to the gene, sampled from a Gaussian (normal) distribution with a mean of 0 and a standard deviation defined by the constant \texttt{STD\_DEV}. This method tends to introduce small perturbations, promoting a smoother and more controlled evolutionary process.
+
+The final result is a new individual whose genotype has been slightly modified while maintaining its general structure. This operation enables the exploration of new regions in the solution space that would not be reached by crossover alone. Therefore, mutation plays a fundamental role in balancing exploration and exploitation in evolutionary algorithms.
 \subsection{Survival Selection}
+The \texttt{survival\_selection} function implements an elitist survival strategy. It starts by sorting the \texttt{offspring} list in descending order of fitness, ensuring the best individuals are at the front.
+
+Then, the elite individuals from the current population (the top \texttt{ELITE\_SIZE} individuals) are re-evaluated using the \texttt{evaluate\_population} function. This accounts for potential changes in evaluation due to stochasticity in the fitness function.
+
+These re-evaluated elite individuals are combined with the rest of the offspring (excluding the worst \texttt{ELITE\_SIZE} individuals) to form the new population.
+
+Finally, the new population is sorted again by fitness in descending order, and returned. This ensures that the best individuals are preserved and that the population is always composed of the fittest available solutions.
 \subsection{Evolution}
+The \texttt{evolution} function encapsulates the entire evolutionary process. It begins by creating multiple parallel evaluation processes to improve efficiency during fitness computation.
+
+Next an initial population is generated and evaluated. The best individual is stored to track the algorithm’s progress across generations.
+
+For each generation, the algorithm generates offspring through either crossover (with probability \texttt{PROB\_CROSSOVER}) or direct parent copying. Parents are selected using the active selection strategy and all individuals are then mutated.
+
+Once the offspring population reaches the predefined size, it is evaluated in parallel. After evaluation, the \texttt{survival\_selection} function is used to determine which individuals survive to the next generation, ensuring elitism is preserved.
+
+The best individual of each generation is recorded alongside success rate and elapsed time for performance monitoring.
+
+At the end of all generations, all evaluation processes are terminated, and the list of best individuals per generation is returned.
 
 \subsection{Algorithm Parameters}
 \begin{itemize}
@@ -604,29 +629,48 @@ In order to adapt the algorithm to the windy environment, we made the stability 
         # ...
 
         stable_angle = (25-(angle)**2) / 25
+
         stable_angle_speed = int(abs(angle_speed) < 1.5)
+
         stable_horizontal_speed = int(abs(x_speed) < 0.1)   # Neste caso é melhor discreto
+
         stable_vertical_speed = (10-(y_speed+0.01)**2) / 10  # Offset de -0.01 (velocidade desejada de -0.01)
 
         stability = (
+
             50* stable_angle +
+
             40* stable_angle_speed +
+
             40* stable_horizontal_speed +
+
             30* stable_vertical_speed
+
         ) * 1 + (int(ENABLE_WIND) * 10)
 
         # ...
 
         fitness = (
+
               stability
+
             + positioning
+
             + landing
+
         )
 
         return fitness, check_successful_landing(observation)
+
     # ...
+
+
 \end{lstlisting}
+
+
 The way this weight is implemented, allows us to easily turn it on and off, and to adjust the weight of the wind penalty.
+
+
 Even this trivial implementation allows us to achieve a success rate of 86\%, which is significantly better than the 24\% we achieved in the first version of the code.
 
 
@@ -637,5 +681,20 @@ The evolutionary algorithm proved effective, though wind introduction required:
     \item Objective function adjustments
     \item Maintained genetic diversity
 \end{itemize}
+
+\subsection{Objective Function Design}
+
+The sucess of the lander heavily depends on the objective functioon. Its careful tuning while balancing weights for stability, positioning, and landing were crucial.
+
+Using continuous reward functions (e.g., quadratic penalties for angle and position) proved to be more effective than discrete thresholds in guiding the lander towards optimal behavior.
+
+\subsection{Parent Selection}
+
+Tournament selection outperformed fitness-proportionate selection in consistency. Retaining both methods allowed for flexibility, but tournament selection was more reliable for this problem.
+
+\subsection{Wind Adaptation}
+When introducing wind to the environment it required penalizing horizontal oscillations more agressively, showing the need for environment-specific reward shaping.
+
+Larger neural networks - 8, 16, X? - improved adaptability, suggesting that wind introduces complexity requiring higher model capacity.
 
 \end{document}
