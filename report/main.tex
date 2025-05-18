@@ -44,16 +44,47 @@ University of Coimbra, Coimbra, Portugal
 \newpage
 
 \section{Methodology}
-\subsection{Neural Network Architecture}
-The neural network uses the architecture \texttt{SHAPE = (8, 12, 2)} with:
-\begin{itemize}
-    \item 8 inputs (environment observations)
-    \item 1 hidden layer with 12 neurons
-    \item 2 outputs (engine controls)
-\end{itemize}
+\subsection{Perceptions}
+We utilize the following perception variables to determine the lander's state:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+x & Horizontal position (0 at platform center) \\
+y & Vertical position (0 at platform surface) \\
+Vx & Horizontal velocity (positive rightward) \\
+Vy & Vertical velocity (positive upward) \\
+A & Angular direction (positive counter-clockwise) \\
+Va & Angular velocity (positive counter-clockwise) \\
+L & Left leg ground contact (1 if touching) \\
+R & Right leg ground contact (1 if touching) \\
+\bottomrule
+\end{tabular}
+\caption{Perception Variables and Descriptions}
+\end{table}
+
+\subsection{Actions}
+To control the it's descent, the Lander uses two motors: main motor (mM) and lateral motors (lM), whose values range from 0.0$\rightarrow$1.0 and -1.0$\rightarrow$1.0.
+These two controls are represented and controlled by the two output neurons, as seen in the "network" function.
+When the mM's value is greater than 0.5, the motor is on. When the lM's value is lesser than -0.5, the left motor activates, and when it is greater than 0.5, the right motor activates.
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+mM & main Motor \\
+lM & lateral Motor \\
+\bottomrule
+\end{tabular}
+\caption{Perception Variables and Descriptions}
+\end{table}
 
 \subsection{Objective Function}
-Customized reward function emphasizing:
+Customized reward function that emphasizes:
 \begin{itemize}
     \item Platform proximity (\(1 - x^2\))
     \item Stable vertical velocity (\(10 - (v_y + 0.01)^2\))
@@ -62,11 +93,38 @@ Customized reward function emphasizing:
 \end{itemize}
 
 \subsection{Genetic Operators}
-\begin{itemize}
-    \item \textbf{Selection}: Binary tournament
-    \item \textbf{Crossover}: Random point crossover
-    \item \textbf{Mutation}: Normal distribution (\(\sigma=0.1\))
-\end{itemize}
+
+\subsubsection{Parent Selection Methods}
+
+Two different strategies for selecting parents were implemented and can be interchanged through the \texttt{PARENT\_SELECTION} variable.
+
+\paragraph{Fitness-Proportionate Selection (Roulette Wheel)}
+The \texttt{parent\_selection} function selects individuals with a probability proportional to their fitness. The total fitness of all positively fit individuals is calculated and a random probability is drawn. The algorithm iterates through the population, subtracting each individual's fitness contribution from the probability until one is selected. If the total positive fitness is zero or negative, a random individual is returned to avoid failure. This method ensures that individuals with higher fitness are more likely to be chosen while still giving a chance to less fit individuals.
+
+\paragraph{Tournament Selection}
+The \texttt{parent\_selection\_tournament} function implements a simple tournament selection: two individuals are randomly selected from the population, and the one with the highest fitness is chosen as the parent. This method introduces selective pressure by favoring the fitter of two candidates but without requiring any normalization of fitness values.
+
+\paragraph{Current Strategy}
+The evolutionary process currently uses the \texttt{tournament selection} strategy as the active method, set by:
+\begin{verbatim}
+PARENT_SELECTION = parent_selection_tournament
+\end{verbatim}
+This can be easily changed to the fitness-proportionate version if desired, providing flexibility to test different selection dynamics. We implemented and tested both approaches and observed that while tournament selection consistently yielded better results, the fitness-proportionate method also performed well in practice. For this reason, we decided to retain both implementations to allow further experimentation and adaptability in different scenarios.
+
+\subsection{Crossover}
+The \texttt{crossover} function is responsible for generating a new individual (offspring) from two parent individuals, using a single-point crossover method. This is a standard technique in genetic algorithms where a random point is chosen along the genotype vector, and the offspring inherits genes from one parent up to that point and from the other parent after that point.
+
+The function starts by randomly selecting a crossover point between 1 and \texttt{GENOTYPE\_SIZE - 1}, ensuring that both parents contribute at least one gene to the offspring. Then, it randomly chooses which parent will contribute the first part and which one will contribute the second. This is done by generating a random number and comparing it with 0.5.
+
+Depending on the order chosen, the function constructs the offspring's genotype by taking the first part from one parent and the second part from the other using list slicing. The result is a new genotype that is a mixture of the genetic material of both parents.
+
+Finally, the function returns a new individual represented as a dictionary with the newly generated genotype and a \texttt{None} fitness value, indicating that the individual has not yet been evaluated.
+
+This implementation introduces genetic diversity while preserving genetic information from the parents, which is essential for effective exploration of the solution space.
+
+\subsection{Mutation}
+\subsection{Survival Selection}
+\subsection{Evolution}
 
 \subsection{Algorithm Parameters}
 \begin{itemize}
